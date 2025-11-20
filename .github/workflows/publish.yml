@@ -20,6 +20,7 @@ jobs:
       attestations: write
 
     strategy:
+      fail-fast: false
       matrix:
         image:
           - name: gh-actions-runner-ephemeral
