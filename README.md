@@ -36,23 +36,24 @@ This repository provides two types of ephemeral CI/CD runners:
 
 ### Quick Start
 
-**From GitHub Container Registry:**
 ```bash
+# For repository-scoped runner
 docker run --rm \
   -e GITHUB_PAT="ghp_your_token_here" \
-  -e REGISTRATION_TOKEN_API_URL="https://api.github.com/repos/OWNER/REPO/actions/runners/registration-token" \
-  -e GH_URL="https://github.com/OWNER/REPO" \
-  -e RUNNER_LABELS="docker,linux,self-hosted" \
-  ghcr.io/mrlightful/gh-actions-runner-ephemeral:latest
+  -e GITHUB_SCOPE="repo" \
+  -e GITHUB_ORG="OWNER" \
+  -e GITHUB_REPO="REPO" \
+  -e GITHUB_RUNNER_LABELS="docker,linux,self-hosted" \
+  mrlightful/gh-actions-runner-ephemeral:latest
 ```
 
-**Or from Docker Hub:**
 ```bash
+# For organization-scoped runner
 docker run --rm \
   -e GITHUB_PAT="ghp_your_token_here" \
-  -e REGISTRATION_TOKEN_API_URL="https://api.github.com/repos/OWNER/REPO/actions/runners/registration-token" \
-  -e GH_URL="https://github.com/OWNER/REPO" \
-  -e RUNNER_LABELS="docker,linux,self-hosted" \
+  -e GITHUB_SCOPE="org" \
+  -e GITHUB_ORG="OWNER" \
+  -e GITHUB_RUNNER_LABELS="docker,linux,self-hosted" \
   mrlightful/gh-actions-runner-ephemeral:latest
 ```
 
@@ -61,9 +62,10 @@ docker run --rm \
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `GITHUB_PAT` | GitHub Personal Access Token | `ghp_xxxxxxxxxxxxxxxxxxxx` |
-| `REGISTRATION_TOKEN_API_URL` | GitHub API endpoint for registration tokens | `https://api.github.com/repos/myorg/myrepo/actions/runners/registration-token` |
-| `GH_URL` | GitHub repository URL | `https://github.com/myorg/myrepo` |
-| `RUNNER_LABELS` | Comma-separated labels for the runner | `docker,linux,self-hosted,gpu` |
+| `GITHUB_SCOPE` | Runner scope: `repo` for repository-scoped, `org` for organization-scoped | `repo` or `org` |
+| `GITHUB_ORG` | GitHub organization or user name | `myorg` |
+| `GITHUB_REPO` | GitHub repository name (required only for repository-scoped runners) | `myrepo` |
+| `GITHUB_RUNNER_LABELS` | Comma-separated labels for the runner | `docker,linux,self-hosted,gpu` |
 
 ### Creating a GitHub Personal Access Token
 
