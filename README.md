@@ -1,4 +1,10 @@
-# Tutorial resources for: Deploy self-hosted CI/CD runners and agents with Azure Container Apps jobs
+# Self-hosted CI/CD runner images
 
-See the [tutorial](https://learn.microsoft.com/azure/container-apps/tutorial-ci-cd-runners-jobs) for more information.
+Github Actions Runner & Azure Pipeline Agent docker images for self-hosting.
+
+Automatically registers the runner with the repository, with de-registration at the end.
+
+Use-case: hosting with Azure Container Apps, so the runner is scaled up and down gracefully.
+
+Based on [Microsoft's tutorial](https://learn.microsoft.com/azure/container-apps/tutorial-ci-cd-runners-jobs).
 
