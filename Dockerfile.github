@@ -8,6 +8,10 @@ RUN apt-get update && apt-get install -y curl jq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Install some common tools
+RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
+# Configure the entrypoint.
 COPY github-actions-runner/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
