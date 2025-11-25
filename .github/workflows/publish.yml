@@ -21,7 +21,8 @@ jobs:
       - name: Define image
         id: image
         run: |
-          PLATFORM="${ github.event.release.tag_name%%@* }"
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          PLATFORM="${TAG_NAME%%@*}"
 
           case "$PLATFORM" in
             gh)
