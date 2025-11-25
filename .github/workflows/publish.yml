@@ -3,8 +3,18 @@ name: Build and Publish Docker Images
 on:
   push:
     tags:
-      - 'v*'
+      - 'gh@v*'
+      - 'az@v*'
   workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Target platform for the Docker image'
+        required: true
+        default: 'gh'
+        type: choice
+        options:
+          - gh
+          - az
 
 env:
   REGISTRY_GITHUB: ghcr.io
@@ -18,19 +28,37 @@ jobs:
       packages: write
       id-token: write
       attestations: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        image:
-          - name: gh-actions-runner-ephemeral
-            dockerfile: Dockerfile.github
-            context: .
-          - name: az-pipelines-agent-ephemeral
-            dockerfile: Dockerfile.azure-pipelines
-            context: .
-
     steps:
+      - name: Define image
+        id: image
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            PLATFORM="${{ github.event.inputs.platform }}"
+          else
+            PLATFORM="${github.ref_name%%@*}"
+          fi
+
+          case "$PLATFORM" in
+            gh)
+              NAME="gh-actions-runner-ephemeral"
+              DOCKERFILE="Dockerfile.github"
+              ;;
+            az)
+              NAME="az-pipelines-agent-ephemeral"
+              DOCKERFILE="Dockerfile.azure-pipelines"
+              ;;
+            *)
+              echo "::error::Unsupported platform: $PLATFORM"
+              exit 1
+              ;;
+          esac
+
+          {
+            echo "name=$NAME"
+            echo "dockerfile=$DOCKERFILE"
+            echo "context=."
+          } >> "$GITHUB_OUTPUT"
+
       - name: Checkout repository
         uses: actions/checkout@v4
         
