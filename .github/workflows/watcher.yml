@@ -47,3 +47,4 @@ jobs:
         with:
           name: gh@${{ steps.tag.outputs.tag }}
           tag_name: gh@${{ steps.tag.outputs.tag }}
+          token: ${{ secrets.GH_PAT }}
