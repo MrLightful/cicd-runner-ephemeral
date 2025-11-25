@@ -10,7 +10,7 @@ env:
 
 jobs:
   build-and-publish:
-    if: startsWith(github.event.release.name, 'gh@v') || startsWith(github.event.release.name, 'az@v')
+    if: startsWith(github.event.release.tag_name, 'gh@v') || startsWith(github.event.release.tag_name, 'az@v')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,7 +21,7 @@ jobs:
       - name: Define image
         id: image
         run: |
-          PLATFORM="${github.ref_name%%@*}"
+          PLATFORM="${ github.event.release.tag_name%%@* }"
 
           case "$PLATFORM" in
             gh)
