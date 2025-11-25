@@ -1,0 +1,49 @@
+name: Watch Github Actions Runner Releases
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"   # every 3 hours
+  workflow_dispatch:
+
+permissions:
+    contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all tags
+
+      - name: Get latest tag from actions/runner
+        id: tag
+        env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST=$(gh api repos/actions/runner/tags --jq '.[0].name')
+          echo "tag=$LATEST" >> $GITHUB_OUTPUT
+          echo "Latest actions/runner tag: $LATEST"
+
+      - name: Check if tag already exists in our repo
+        id: compare
+        run: |
+          LATEST_TAG="${{ steps.tag.outputs.tag }}"
+          OUR_TAG="gh@$LATEST_TAG"
+          echo "Checking for existing tag: $OUR_TAG"
+          
+          if git tag --list | grep -q "^$OUR_TAG$"; then
+            echo "Tag $OUR_TAG already exists in our repository"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Tag $OUR_TAG does not exist, will create release"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: steps.compare.outputs.changed == 'true'
+        with:
+          name: gh@${{ steps.tag.outputs.tag }}
+          tag_name: gh@${{ steps.tag.outputs.tag }}
