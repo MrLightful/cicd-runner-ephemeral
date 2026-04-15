@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-set -e
+set -eo pipefail
 
 # --- Helper: base64url encode (no padding) ---
 base64url() {
@@ -45,12 +45,23 @@ get_installation_token() {
   local jwt
   jwt=$(generate_jwt "$app_id" "$private_key")
 
-  curl -X POST -fsSL \
+  local response
+  response=$(curl -X POST -fsSL \
     -H 'Accept: application/vnd.github.v3+json' \
     -H "Authorization: Bearer $jwt" \
     -H 'X-GitHub-Api-Version: 2022-11-28' \
-    "https://api.github.com/app/installations/${installation_id}/access_tokens" \
-    | jq -r '.token'
+    "https://api.github.com/app/installations/${installation_id}/access_tokens")
+
+  local token
+  token=$(printf '%s' "$response" | jq -r '.token // empty')
+
+  if [ -z "$token" ]; then
+    echo "Error: Failed to obtain installation access token from GitHub App." >&2
+    echo "API response: $response" >&2
+    exit 1
+  fi
+
+  printf '%s' "$token"
 }
 
 # --- Determine authentication method ---
@@ -63,6 +74,12 @@ if [ -n "$GITHUB_APP_ID" ] && [ -n "$GITHUB_APP_INSTALLATION_ID" ]; then
   if [ -z "$GITHUB_APP_PRIVATE_KEY" ]; then
     echo "Error: GITHUB_APP_PRIVATE_KEY (or GITHUB_APP_PRIVATE_KEY_FILE) must be set when using GitHub App authentication." >&2
     exit 1
+  fi
+
+  # Normalize PEM newlines: Azure Key Vault / Container App secrets often escape
+  # real newlines to literal '\n' characters, which breaks OpenSSL key parsing.
+  if printf '%s' "$GITHUB_APP_PRIVATE_KEY" | grep -q '\\n'; then
+    GITHUB_APP_PRIVATE_KEY=$(printf '%b' "$GITHUB_APP_PRIVATE_KEY")
   fi
 
   echo "Authenticating as GitHub App (App ID: $GITHUB_APP_ID, Installation ID: $GITHUB_APP_INSTALLATION_ID)..."
@@ -84,11 +101,18 @@ else
 fi
 
 # --- Retrieve a short-lived runner registration token ---
-GH_RUNNER_REGISTRATION_TOKEN="$(curl -X POST -fsSL \
+REG_RESPONSE=$(curl -X POST -fsSL \
   -H 'Accept: application/vnd.github.v3+json' \
   -H "Authorization: Bearer $GH_TOKEN" \
   -H 'X-GitHub-Api-Version: 2022-11-28' \
-  "$GH_REGISTER_RUNNER_URL" \
-  | jq -r '.token')"
+  "$GH_REGISTER_RUNNER_URL")
 
-./config.sh --url $GH_URL --token $GH_RUNNER_REGISTRATION_TOKEN --labels $GITHUB_RUNNER_LABELS --unattended --ephemeral && ./run.sh
+GH_RUNNER_REGISTRATION_TOKEN=$(printf '%s' "$REG_RESPONSE" | jq -r '.token // empty')
+
+if [ -z "$GH_RUNNER_REGISTRATION_TOKEN" ]; then
+  echo "Error: Failed to obtain runner registration token." >&2
+  echo "API response: $REG_RESPONSE" >&2
+  exit 1
+fi
+
+./config.sh --url "$GH_URL" --token "$GH_RUNNER_REGISTRATION_TOKEN" --labels "$GITHUB_RUNNER_LABELS" --unattended --ephemeral && ./run.sh
