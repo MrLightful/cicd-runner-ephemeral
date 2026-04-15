@@ -46,7 +46,7 @@ get_installation_token() {
   jwt=$(generate_jwt "$app_id" "$private_key")
 
   local response
-  response=$(curl -X POST -fsSL \
+  response=$(curl -sS -X POST \
     -H 'Accept: application/vnd.github.v3+json' \
     -H "Authorization: Bearer $jwt" \
     -H 'X-GitHub-Api-Version: 2022-11-28' \
@@ -101,7 +101,7 @@ else
 fi
 
 # --- Retrieve a short-lived runner registration token ---
-REG_RESPONSE=$(curl -X POST -fsSL \
+REG_RESPONSE=$(curl -sS -X POST \
   -H 'Accept: application/vnd.github.v3+json' \
   -H "Authorization: Bearer $GH_TOKEN" \
   -H 'X-GitHub-Api-Version: 2022-11-28' \
