@@ -91,6 +91,17 @@ else
   exit 1
 fi
 
+# --- Validate required environment variables ---
+if [ -z "$GITHUB_ORG" ]; then
+  echo "Error: GITHUB_ORG must be set to your GitHub organization or user name." >&2
+  exit 1
+fi
+
+if [ "$GITHUB_SCOPE" != "org" ] && [ -z "$GITHUB_REPO" ]; then
+  echo "Error: GITHUB_REPO must be set when using repo-level runners (GITHUB_SCOPE != 'org')." >&2
+  exit 1
+fi
+
 # --- Construct URLs from scope, org, and repo ---
 if [ "$GITHUB_SCOPE" = "org" ]; then
   GH_REGISTER_RUNNER_URL="https://api.github.com/orgs/$GITHUB_ORG/actions/runners/registration-token"
