@@ -126,4 +126,18 @@ if [ -z "$GH_RUNNER_REGISTRATION_TOKEN" ]; then
   exit 1
 fi
 
-./config.sh --url "$GH_URL" --token "$GH_RUNNER_REGISTRATION_TOKEN" --labels "$GITHUB_RUNNER_LABELS" --unattended --ephemeral && ./run.sh
+# --- Drop long-lived credentials before the job starts ---
+# Only the single-use registration token is needed from here.
+unset GITHUB_APP_PRIVATE_KEY GITHUB_APP_PRIVATE_KEY_FILE GH_TOKEN GITHUB_PAT
+
+# --- Register (ephemeral) and run a single job ---
+config_args=(--url "$GH_URL" --token "$GH_RUNNER_REGISTRATION_TOKEN" --labels "$GITHUB_RUNNER_LABELS" --unattended --ephemeral)
+# Optional: restrict where this runner can be used.
+if [ -n "$GITHUB_RUNNER_GROUP" ]; then
+  config_args+=(--runnergroup "$GITHUB_RUNNER_GROUP")
+fi
+./config.sh "${config_args[@]}"
+
+# Drop the consumed registration token and its API response before the job.
+unset GH_RUNNER_REGISTRATION_TOKEN REG_RESPONSE
+exec ./run.sh
