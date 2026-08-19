@@ -85,6 +85,21 @@ Authentication — provide **either** a PAT **or** the GitHub App variables (not
 | `GITHUB_ORG` | GitHub organization or user name | `myorg` |
 | `GITHUB_REPO` | GitHub repository name (required only for repository-scoped runners) | `myrepo` |
 | `GITHUB_RUNNER_LABELS` | Comma-separated labels for the runner | `docker,linux,self-hosted,gpu` |
+| `GITHUB_RUNNER_GROUP` | (Optional) Runner group to register into. Use a group whose repository access is restricted to bound where the runner can run. | `my-runner-group` |
+
+### Credential handling
+
+When authenticating with a GitHub App, the entrypoint uses the private key only to
+obtain a short-lived, single-use runner **registration token**, then **unsets the
+private key and the installation token from the environment before starting the
+runner**. Workflow steps therefore cannot read `GITHUB_APP_PRIVATE_KEY` (or the
+installation token) from the environment. The same applies to `GITHUB_PAT`-based auth
+in that the registration token is dropped before the job runs.
+
+This matters most for **shared** runners: the App key can register runners for the
+whole org, so a job that could read it would be able to register a rogue runner and
+intercept other repositories' jobs. Pair this with a minimal-permission App and a
+`GITHUB_RUNNER_GROUP` whose repository access is allowlisted.
 
 ### Authentication
 
